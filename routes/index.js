@@ -467,8 +467,7 @@ router.get('/buySellApi2', async function (req, res) {
       await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
     }
     let order =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(symbol) : await bybitClient1.fetchTicker(symbol);
-    let arrayTpPrice = req.query?.tp_price.split(',');
-    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(order.last,arrayTpPrice[0]) :  calculateSellTPSL(order.last,arrayTpPrice[0]);
+    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(order.last,req.query?.entry_offset) :  calculateSellTPSL(order.last,req.query?.entry_offset);
     let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;

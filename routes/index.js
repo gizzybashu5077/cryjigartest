@@ -516,7 +516,7 @@ router.get('/buySellApi2', async function (req, res) {
           req.query.finalPrice = finalData;
           req.query.openOrderQty = openOrderQty;
           req.query.order_id = order.id;
-          await orderBookDb(html);
+          await orderBookDb(req.query);
           return order;
       },
     ]);

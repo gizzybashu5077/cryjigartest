@@ -95,21 +95,21 @@ const onPong = () => {
 const onMessage = (pl) => {
   console.log(pl.toString());
   let ordersData  = JSON.parse(pl);
-//   if(ordersData && ordersData.data){
-//   let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
-//   connection.query(sqlsss, async function (err, appData) {
-//     if (err) {
-//       console.log('err: ', err);
-//     } else {
-//       let orderFound = ordersData.data.findIndex(order => order.orderId === appData[0].order_id);
-//       console.log('orderFound: ', orderFound);
-//       if(orderFound != -1){
-//       await takeProfitOrder(appData[0]);
-//       }
-//     }
-//   })
-// }
-
+  if(ordersData && ordersData.data){
+  let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
+  connection.query(sqlsss, async function (err, appData) {
+    if (err) {
+      console.log('err: ', err);
+    } else {
+      let orderFound = ordersData.data.find(order => order.orderId === appData[0].order_id);
+      if(orderFound != undefined){
+        if(orderFound.orderStatus == 'Triggered'){
+          await takeProfitOrder(appData[0]);
+        }
+      }
+    }
+  })
+}
 };
 
 const onError = async (err) => {
@@ -174,55 +174,6 @@ const bybitClient1 = new ccxt.bybit({
     defaultType: 'future',
   }
 });
-
-// async function takeProfitOrder(data) {
-//   try {
-//       let openOrderGet= data?.accountType === 'spot' ?  await bybitClient.fetchPosition(data?.instrument_token) : await bybitClient1.fetchPosition(data?.instrument_token);
-//       console.log('openOrderGet: ', openOrderGet);
-//       let entryPrice = Number(openOrderGet.entryPrice);
-//       const array1 = data?.tp_price.split(',');
-//       const array2 = data?.tp_qty.split(',');
-//       const array3 = data?.tp_sl.split(',');
-//       let finalSymbol = data?.instrument_token.replace("/USDT:USDT", 'USDT');
-
-//       const resultArray = array1.slice(0, Math.min(array1.length, array2.length, array3.length)).map((_, index) => {
-//         const price = data.transaction_type =='buy' ? calculateBuyTPSL(entryPrice,array1[index]) :  calculateSellTPSL(entryPrice,array1[index]);
-//         const qty = array2[index]
-//         const sl = data.transaction_type =='buy' ?  calculateBuyTPSL(entryPrice,array3[index]) :  calculateSellTPSL(entryPrice,array3[index]);
-//         return { qty, price, sl };
-//       });
-//       await Promise.all(resultArray.map(item => setTradingStop(item,finalSymbol)))
-//         .then((responses) => {
-//           console.log('responses: ', responses);
-//         })
-//         .catch((error) => {
-//           return nextCall({
-//             "message": "something went wrong",
-//             "data": null
-//           });
-//         })
-//         let html = ''  
-//         for (let i = 0; i < resultArray.length; i++) {
-//           const entry = resultArray[i];
-//           const tpNumber = i + 1;  // TP1, TP2, TP3, etc.
-//           let bookIcon = '';
-//           if (tpNumber == 1) {
-//               bookIcon = '📕'; 
-//           }else if (tpNumber == 2) {
-//               bookIcon = '📒';  
-//           } else {
-//               bookIcon = '📗';  // Use a different icon for sl <= 0.005
-//           }
-//           html += `${bookIcon} <b> TP${tpNumber} EntryPrice: </b> ${Number(entry.price).toFixed(6)}\n` +
-//                   `${bookIcon} <b> TP${tpNumber} qty: </b> ${entry.qty}\n` +
-//                   `${bookIcon} <b> TP${tpNumber} sl: </b> ${Number(entry.sl).toFixed(6)}\n`;
-//         }
-//         await teleStockMsg(html);
-//   } catch (error) {
-//     console.error(error);
-//     throw error;
-//   }
-// }
 
 async function takeProfitOrder(data) {
   try {
@@ -466,8 +417,19 @@ router.get('/buySellApi2', async function (req, res) {
     if(req.query?.leverage && Number(req.query?.leverage) != 0){
       await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
     }
-    let order =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(req.query?.instrument_token) : await bybitClient1.fetchTicker(req.query?.instrument_token);
-    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(order.last,req.query?.entry_offset) :  calculateSellTPSL(order.last,req.query?.entry_offset);
+    const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
+
+    if (openOrders.length != 0) {
+      const canceledOrders = await Promise.all(
+        openOrders.map(async order => {
+          const canceledOrder = req.query?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, req.query?.instrument_token) : await bybitClient1.cancelOrder(order.id, req.query?.instrument_token);
+          return canceledOrder;
+        })
+      );
+    }
+    let finalDateTime =  moment.tz('Asia/Kolkata').format('DD-MM-YYYY HH:mm ss:SSS');
+    // let orderData =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(req.query?.instrument_token) : await bybitClient1.fetchTicker(req.query?.instrument_token);
+    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(req.query?.price,req.query?.entry_offset) :  calculateSellTPSL(req.query?.price,req.query?.entry_offset);
     let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;
@@ -480,25 +442,33 @@ router.get('/buySellApi2', async function (req, res) {
     const bybitBalance = await async.waterfall([
       async function () {
         let symbol = req.query?.instrument_token;
+        let trigger_percent = req.query?.trigger_predication;
         let type = "limit"; // or 'MARKET' or 'LIMIT'
         let side = req.query?.transaction_type; // or 'SELL' or 'BUY'
-        let price = Number(finalPrice); 
+        let price = Number(finalPrice.toFixed(6)); 
         let quantity = Number(openOrderQty); 
 
         // Fetch OHLCV (Open/High/Low/Close/Volume) data
         let order;
         if(req.query?.sl_price && (Number(req.query?.sl_price) != 0)){
+          let triggerPriceData = req.query?.transaction_type=='sell' ?  calculateBuyTPSL(finalPrice,trigger_percent) :  calculateSellTPSL(finalPrice,trigger_percent);
+          let sltriggerPriceData = req.query?.transaction_type=='sell' ?   calculateBuyTPSL(finalPrice,req.query?.sl_price) :  calculateSellTPSL(finalPrice,req.query?.sl_price);
           let params = {
+            'triggerPrice': Number(triggerPriceData.toFixed(6)),
+            'triggerDirection':req.query?.transaction_type=='buy' ? 'above' : 'below',
             'stopLoss': {
               'type': 'limit', // or 'market', this field is not necessary if limit price is specified
-              'triggerPrice': req.query?.transaction_type=='sell' ?  calculateBuyTPSL(order.last,req.query?.sl_price) :  calculateSellTPSL(order.last,req.query?.sl_price),
+              'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
             },
             marginMode: req.query?.margin_mode
             // marginMode: req.query?.margin_mode =='isolated' ? 'isolated' :'cross'
           };
           order =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(symbol, type, side, quantity, price, params) : await bybitClient1.createOrder(symbol, type, side, quantity, price, params);
         }else{
+          let triggerPriceData = req.query?.transaction_type=='sell' ?  calculateBuyTPSL(finalPrice,trigger_percent) :  calculateSellTPSL(finalPrice,trigger_percent);
           let params = {
+            'triggerPrice': Number(triggerPriceData.toFixed(6)),
+            'triggerDirection':req.query?.transaction_type=='buy' ? 'above' : 'below',
             marginMode: req.query?.margin_mode,
             tpslMode:'partial'
           };
@@ -512,7 +482,7 @@ router.get('/buySellApi2', async function (req, res) {
             '📈 <b>Mode : </b> limit \n' +
             '🕙 <b>Trade Time : </b> ' + finalDateTime + '\n' ;
           await teleStockMsg(html);
-          req.query.finalPrice = finalData;
+          req.query.finalPrice = finalPrice;
           req.query.openOrderQty = openOrderQty;
           req.query.order_id = order.id;
           await orderBookDb(req.query);

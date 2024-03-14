@@ -379,7 +379,7 @@ function deleteRecord(){
 
 function testServer(){   
   request({
-    uri: "https://cryvijaytest.onrender.com/",
+    uri: "https://cryjigartest.onrender.com/",
     method: "GET",
   }, (err, response, body) => {
     console.log('body: ', body);

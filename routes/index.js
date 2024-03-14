@@ -491,7 +491,7 @@ router.get('/buySellApi2', async function (req, res) {
           let params = {
             'stopLoss': {
               'type': 'limit', // or 'market', this field is not necessary if limit price is specified
-              'triggerPrice': req.query?.transaction_type=='sell' ?  calculateBuyTPSL(req.query?.sl_price) :  calculateSellTPSL(req.query?.sl_price),
+              'triggerPrice': req.query?.transaction_type=='sell' ?  calculateBuyTPSL(order.last,req.query?.sl_price) :  calculateSellTPSL(order.last,req.query?.sl_price),
             },
             marginMode: req.query?.margin_mode
             // marginMode: req.query?.margin_mode =='isolated' ? 'isolated' :'cross'

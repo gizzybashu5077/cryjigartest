@@ -95,20 +95,20 @@ const onPong = () => {
 const onMessage = (pl) => {
   console.log(pl.toString());
   let ordersData  = JSON.parse(pl);
-  if(ordersData && ordersData.data){
-  let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
-  connection.query(sqlsss, async function (err, appData) {
-    if (err) {
-      console.log('err: ', err);
-    } else {
-      let orderFound = ordersData.data.findIndex(order => order.orderId === appData[0].order_id);
-      console.log('orderFound: ', orderFound);
-      if(orderFound != -1){
-      await takeProfitOrder(appData[0]);
-      }
-    }
-  })
-}
+//   if(ordersData && ordersData.data){
+//   let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
+//   connection.query(sqlsss, async function (err, appData) {
+//     if (err) {
+//       console.log('err: ', err);
+//     } else {
+//       let orderFound = ordersData.data.findIndex(order => order.orderId === appData[0].order_id);
+//       console.log('orderFound: ', orderFound);
+//       if(orderFound != -1){
+//       await takeProfitOrder(appData[0]);
+//       }
+//     }
+//   })
+// }
 
 };
 

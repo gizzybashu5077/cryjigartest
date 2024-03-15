@@ -318,7 +318,7 @@ setInterval(function setup() {
 }, 19000)
 
 function deleteRecord(){   
-  let sqlsss = "DELETE FROM order_book WHERE id BETWEEN 0 AND 6";
+  let sqlsss = "DELETE FROM order_book WHERE id NOT IN (SELECT id FROM (SELECT id FROM order_book ORDER BY id DESC LIMIT 5) AS last_four)";
   connection.query(sqlsss, async function (err, appData) {
     if (err) {
       console.log('err: ', err);

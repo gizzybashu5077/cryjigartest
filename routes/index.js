@@ -177,7 +177,7 @@ const bybitClient1 = new ccxt.bybit({
 
 async function takeProfitOrder(data) {
   try {
-    data?.accountType === 'spot'? await binanceClient.load_time_difference() : await binanceClient1.load_time_difference();
+    data?.accountType === 'spot'? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
     const openOrderGet = data?.accountType === 'spot' ?
       await bybitClient.fetchPosition(data?.instrument_token) :
       await bybitClient1.fetchPosition(data?.instrument_token);

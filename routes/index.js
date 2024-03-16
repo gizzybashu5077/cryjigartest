@@ -348,14 +348,14 @@ router.get('/bybitFetchBalance', async function (req, res) {
           : (await bybitClient1.fetchBalance()).info;
       },
     ]);
-    await teleStockMsg("📈 Bybit api balance featch successfully");
+    await teleStockMsg("VVV Bybit api balance featch successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit balance fetch successfully',
+      message: 'VVV Bybit balance fetch successfully',
       data: binanceBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit api balance featch failed");
+    await teleStockMsg("---> VVV Bybit api balance featch failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -392,7 +392,7 @@ router.get('/historical-data', async function (req, res) {
     ]);
     res.send({
       status_api: 200,
-      message: '📈 Bybit api token data fetch successfully',
+      message: 'VVV Bybit api token data fetch successfully',
       data:{
        "status":"success", 
        "data":{
@@ -401,7 +401,7 @@ router.get('/historical-data', async function (req, res) {
       } ,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit api token data featch failed");
+    await teleStockMsg("---> VVV Bybit api token data featch failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -414,6 +414,12 @@ router.get('/historical-data', async function (req, res) {
 router.get('/buySellApi2', async function (req, res) {
   try {
     req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
+    let openOrdersData1 = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
+    if(openOrdersData1.info.side != ''){
+      let positionDirection1 = openOrdersData1.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
+      let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0) : await bybitClient1.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0);
+      console.log('openOrdersData2: ', openOrdersData2);
+    }
     const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
     if (openOrders.length != 0) {
       const canceledOrders = await Promise.all(
@@ -488,22 +494,22 @@ router.get('/buySellApi2', async function (req, res) {
           return order;
       },
     ]);
-    await teleStockMsg("📈 Bybit api buy/sell api featch successfully");
+    await teleStockMsg("VVV Bybit api buy/sell api featch successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit api buy/sell api featch successfully',
+      message: 'VVV Bybit api buy/sell api featch successfully',
       data: bybitBalance,
     });
   }else{
-    await teleStockMsg("📈 Bybit api buy/sell api fire but not order");
+    await teleStockMsg("VVV Bybit api buy/sell api fire but not order");
     res.send({
       status_api: 200,
-      message: '📈 Bybit api buy/sell api fire but not order',
+      message: 'VVV Bybit api buy/sell api fire but not order',
       data: '',
     });
   }
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit api buy/sell api featch failed");
+    await teleStockMsg("---> VVV Bybit api buy/sell api featch failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -579,14 +585,14 @@ router.get('/marketQuotesLTP', async function (req, res) {
         return order.last;
       },
     ]);
-    await teleStockMsg("📈 Bybit singal token price featch successfully");
+    await teleStockMsg("VVV Bybit singal token price featch successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit singal token price featch successfully',
+      message: 'VVV Bybit singal token price featch successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit singal token price featch failed");
+    await teleStockMsg("---> VVV Bybit singal token price featch failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -618,14 +624,14 @@ router.get('/orderCancel', async function (req, res) {
        return canceledOrders;
       },
     ]);
-    await teleStockMsg("📈 Bybit singal token cancel order successfully");
+    await teleStockMsg("VVV Bybit singal token cancel order successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit singal token cancel order successfully',
+      message: 'VVV Bybit singal token cancel order successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit singal token cancel order failed");
+    await teleStockMsg("---> VVV Bybit singal token cancel order failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -657,14 +663,14 @@ router.get('/cancelAllOrder', async function (req, res) {
        return canceledOrders;
       },
     ]);
-    await teleStockMsg("📈 Bybit token cancel all order successfully");
+    await teleStockMsg("VVV Bybit token cancel all order successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit token cancel all order successfully',
+      message: 'VVV Bybit token cancel all order successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token cancel all order failed");
+    await teleStockMsg("---> VVV Bybit token cancel all order failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -689,14 +695,14 @@ router.get('/openAllOrder', async function (req, res) {
        return openOrders;
       },
     ]);
-    await teleStockMsg("📈 Bybit token all open order successfully");
+    await teleStockMsg("VVV Bybit token all open order successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit token all open order successfully',
+      message: 'VVV Bybit token all open order successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token all open order failed");
+    await teleStockMsg("---> VVV Bybit token all open order failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -724,11 +730,11 @@ router.get('/openSingleOrderPostition', async function (req, res) {
     ]);
     res.send({
       status_api: 200,
-      message: '📈 Bybit token single open order position successfully',
+      message: 'VVV Bybit token single open order position successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token single open order position failed");
+    await teleStockMsg("---> VVV Bybit token single open order position failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -757,11 +763,11 @@ router.get('/allOrderHistory123', async function (req, res) {
     ]);
     res.send({
       status_api: 200,
-      message: '📈 Bybit token single open order position successfully',
+      message: 'VVV Bybit token single open order position successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token single open order position failed");
+    await teleStockMsg("---> VVV Bybit token single open order position failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -785,14 +791,14 @@ router.get('/openAllOrderPostition', async function (req, res) {
        return openOrders;
       },
     ]);
-    await teleStockMsg("📈 Bybit token all open order position successfully");
+    await teleStockMsg("VVV Bybit token all open order position successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit token all open order position successfully',
+      message: 'VVV Bybit token all open order position successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token all open order position failed");
+    await teleStockMsg("---> VVV Bybit token all open order position failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -812,14 +818,14 @@ router.get('/setLeverage', async function (req, res) {
        return setLeverageData;
       },
     ]);
-    await teleStockMsg("📈 Bybit token setLeverage  successfully");
+    await teleStockMsg("VVV Bybit token setLeverage  successfully");
     res.send({
       status_api: 200,
-      message: '📈 Bybit token setLeverage successfully',
+      message: 'VVV Bybit token setLeverage successfully',
       data: bybitBalance,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token setLeverage  failed");
+    await teleStockMsg("---> VVV Bybit token setLeverage  failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',
@@ -894,11 +900,11 @@ router.get('/symbolData', async function (req, res) {
 
     res.send({
       status_api: 200,
-      message: '📈 Bybit token single open order position successfully',
+      message: 'VVV Bybit token single open order position successfully',
       data: symbolsAndQuantities,
     });
   } catch (err) {
-    await teleStockMsg("---> 📈 Bybit token single open order position failed");
+    await teleStockMsg("---> VVV Bybit token single open order position failed");
     res.send({
       status_api: err.code ? err.code : 400,
       message: (err && err.message) || 'Something went wrong',

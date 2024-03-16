@@ -435,14 +435,14 @@ router.get('/buySellApi2', async function (req, res) {
     let finalDateTime =  moment.tz('Asia/Kolkata').format('DD-MM-YYYY HH:mm ss:SSS');
     // let orderData =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(req.query?.instrument_token) : await bybitClient1.fetchTicker(req.query?.instrument_token);
     let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(req.query?.price,req.query?.entry_offset) :  calculateSellTPSL(req.query?.price,req.query?.entry_offset);
-    let openOrderQty;
+    // let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;
-    if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
-      openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
-    }else{
-      openOrderQty = Number(req.query?.quantity);
-    }
+    // if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
+    //   openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
+    // }else{
+     let openOrderQty = Number(req.query?.quantity);
+    // }
    if(positionDirection.toLowerCase() != req.query?.transaction_type){
     const bybitBalance = await async.waterfall([
       async function () {

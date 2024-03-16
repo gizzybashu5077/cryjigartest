@@ -178,6 +178,21 @@ const bybitClient1 = new ccxt.bybit({
 async function takeProfitOrder(data) {
   try {
     data?.accountType === 'spot'? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
+    // let openOrdersData1 = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
+    // if(openOrdersData1.info.side != ''){
+    //   let positionDirection1 = openOrdersData1.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
+    //   let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0) : await bybitClient1.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0);
+    //   console.log('openOrdersData2: ', openOrdersData2);
+    // }
+    const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
+    if (openOrders.length != 0) {
+      const canceledOrders = await Promise.all(
+        openOrders.map(async order => {
+          const canceledOrder = req.query?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, req.query?.instrument_token) : await bybitClient1.cancelOrder(order.id, req.query?.instrument_token);
+          return canceledOrder;
+        })
+      );
+    }
     const openOrderGet = data?.accountType === 'spot' ?
       await bybitClient.fetchPosition(data?.instrument_token) :
       await bybitClient1.fetchPosition(data?.instrument_token);
@@ -414,21 +429,6 @@ router.get('/historical-data', async function (req, res) {
 router.get('/buySellApi2', async function (req, res) {
   try {
     req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
-    let openOrdersData1 = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
-    if(openOrdersData1.info.side != ''){
-      let positionDirection1 = openOrdersData1.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
-      let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0) : await bybitClient1.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0);
-      console.log('openOrdersData2: ', openOrdersData2);
-    }
-    const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
-    if (openOrders.length != 0) {
-      const canceledOrders = await Promise.all(
-        openOrders.map(async order => {
-          const canceledOrder = req.query?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, req.query?.instrument_token) : await bybitClient1.cancelOrder(order.id, req.query?.instrument_token);
-          return canceledOrder;
-        })
-      );
-    }
     if(req.query?.leverage && Number(req.query?.leverage) != 0){
       await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
     }
@@ -441,7 +441,7 @@ router.get('/buySellApi2', async function (req, res) {
     // if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
     //   openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
     // }else{
-     let openOrderQty = Number(req.query?.quantity);
+     let openOrderQty = Number(req.query?.quantity) + Number(openOrdersData.info.size);
     // }
    if(positionDirection.toLowerCase() != req.query?.transaction_type){
     const bybitBalance = await async.waterfall([

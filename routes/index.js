@@ -434,7 +434,7 @@ router.get('/buySellApi2', async function (req, res) {
     }
     let finalDateTime =  moment.tz('Asia/Kolkata').format('DD-MM-YYYY HH:mm ss:SSS');
     let orderData =  req.query?.accountType === 'spot' ? await bybitClient.fetchTicker(req.query?.instrument_token) : await bybitClient1.fetchTicker(req.query?.instrument_token);
-    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(orderData.entryPrice,req.query?.entry_offset) :  calculateSellTPSL(orderData.entryPrice,req.query?.entry_offset);
+    let finalPrice = req.query?.transaction_type=='buy' ? calculateBuyTPSL(orderData.info.markPrice,req.query?.entry_offset) :  calculateSellTPSL(orderData.info.markPrice,req.query?.entry_offset);
     // let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;

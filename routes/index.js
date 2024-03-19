@@ -184,14 +184,12 @@ async function takeProfitOrder(data) {
     //   let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0) : await bybitClient1.createOrder(openOrdersData1.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData1.info.size, 0);
     //   console.log('openOrdersData2: ', openOrdersData2);
     // }
-    let openOrders = data?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(data?.instrument_token) : await bybitClient1.fetchOpenOrders(data?.instrument_token);
+    const openOrders = data?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(data?.instrument_token) : await bybitClient1.fetchOpenOrders(data?.instrument_token);
     if (openOrders.length != 0) {
-      let canceledOrders = await Promise.all(
+      const canceledOrders = await Promise.all(
         openOrders.map(async order => {
-          if(order?.info?.stopOrderType != "StopLoss"){
-          let canceledOrder = data?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, data?.instrument_token) : await bybitClient1.cancelOrder(order.id, data?.instrument_token);
-           return canceledOrder;
-          }
+          const canceledOrder = data?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, data?.instrument_token) : await bybitClient1.cancelOrder(order.id, data?.instrument_token);
+          return canceledOrder;
         })
       );
     }

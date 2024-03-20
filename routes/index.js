@@ -188,8 +188,10 @@ async function takeProfitOrder(data) {
     if (openOrders.length != 0) {
       const canceledOrders = await Promise.all(
         openOrders.map(async order => {
+          if(order?.info?.stopOrderType != "StopLoss"){
           const canceledOrder = data?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, data?.instrument_token) : await bybitClient1.cancelOrder(order.id, data?.instrument_token);
           return canceledOrder;
+          }
         })
       );
     }

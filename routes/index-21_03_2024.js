@@ -199,27 +199,6 @@ async function takeProfitOrder(data) {
 
     console.log('openOrderGet: ', openOrderGet);
 
-    if (Number(openOrdersData.info.size) > Number(data?.quantity)) {
-      let params;
-      if (data?.trigger_price && (Number(data?.trigger_price) != 0)) {
-        let sltriggerPriceData = data?.transaction_type == 'sell' ? calculateBuyTPSL(data?.price, data?.sl_price) : calculateSellTPSL(data?.price, data?.sl_price);
-        params = {
-          'stopLoss': {
-            'type': 'limit', // or 'market', this field is not necessary if limit price is specified
-            'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
-          },
-          marginMode: 'isolated'
-        };
-      } else {
-        params = {
-          marginMode: 'isolated',
-          tpslMode: 'partial'
-        };
-      }
-      let order2 = data?.accountType === 'spot' ? await bybitClient.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params) : await bybitClient1.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params);
-      console.log('order2: ', order2);
-    }
-
     const entryPrice = Number(openOrderGet.entryPrice);
     const array1 = data?.tp_price.split(',');
     const array2 = data?.tp_qty.split(',');
@@ -450,17 +429,6 @@ router.get('/historical-data', async function (req, res) {
 router.get('/buySellApi2', async function (req, res) {
   try {
     req.query?.accountType === 'spot' ? await bybitClient.load_time_difference() : await bybitClient1.load_time_difference();
-    const openOrders = req.query?.accountType === 'spot' ? await bybitClient.fetchOpenOrders(req.query?.instrument_token) : await bybitClient1.fetchOpenOrders(req.query?.instrument_token);
-    if (openOrders.length != 0) {
-      const canceledOrders = await Promise.all(
-        openOrders.map(async order => {
-          if(order?.info?.stopOrderType == "Stop"){
-          const canceledOrder = req.query?.accountType === 'spot' ?  await bybitClient.cancelOrder(order.id, req.query?.instrument_token) : await bybitClient1.cancelOrder(order.id, req.query?.instrument_token);
-          return canceledOrder;
-          }
-        })
-      );
-    }
     if(req.query?.leverage && Number(req.query?.leverage) != 0){
       await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
     }
@@ -470,14 +438,6 @@ router.get('/buySellApi2', async function (req, res) {
     // let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;
-    if(openOrdersData.info.side != '' ){
-      let getValue = (((openOrdersData.unrealizedPnl/openOrdersData.contracts)*100)/openOrdersData.entryPrice).toFixed(6);
-      if(Number(getValue)< 0.4 ){
-        let positionDirection1 = openOrdersData.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
-        let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData.info.size, 0) : await bybitClient1.createOrder(openOrdersData.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData.info.size, 0);
-        console.log('openOrdersData2: ', openOrdersData2);
-      }
-    }
     // if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
     //   openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
     // }else{
@@ -529,7 +489,6 @@ router.get('/buySellApi2', async function (req, res) {
           await teleStockMsg(html);
           req.query.finalPrice = finalPrice;
           req.query.openOrderQty = openOrderQty;
-          req.query.finalOrderQty = Number(req.query?.quantity);
           req.query.order_id = order.id;
           await orderBookDb(req.query);
           return order;
@@ -564,8 +523,7 @@ function orderBookDb(data) {
     data.order_id,
     moment().format('YYYY-MM-DD'),
     data.accountType,
-    // data.openOrderQty,
-    data.finalOrderQty,
+    data.openOrderQty,
     data.price,
     data.instrument_token,
     "limit",

@@ -199,7 +199,7 @@ async function takeProfitOrder(data) {
 
     console.log('openOrderGet: ', openOrderGet);
 
-    if (Number(openOrdersData.info.size) > Number(data?.quantity)) {
+    if (Number(openOrderGet.info.size) > Number(data?.quantity)) {
       let params;
       if (data?.trigger_price && (Number(data?.trigger_price) != 0)) {
         let sltriggerPriceData = data?.transaction_type == 'sell' ? calculateBuyTPSL(data?.price, data?.sl_price) : calculateSellTPSL(data?.price, data?.sl_price);

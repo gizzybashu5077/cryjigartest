@@ -95,21 +95,21 @@ const onPong = () => {
 const onMessage = (pl) => {
   console.log(pl.toString());
   let ordersData  = JSON.parse(pl);
-//   if(ordersData && ordersData.data){
-//   let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
-//   connection.query(sqlsss, async function (err, appData) {
-//     if (err) {
-//       console.log('err: ', err);
-//     } else {
-//       let orderFound = ordersData.data.find(order => order.orderId === appData[0].order_id);
-//       if(orderFound != undefined){
-//         if(orderFound.orderStatus == 'Triggered'){
-//           await takeProfitOrder(appData[0]);
-//         }
-//       }
-//     }
-//   })
-// }
+  if(ordersData && ordersData.data){
+  let sqlsss = "SELECT * FROM order_book ORDER BY id DESC LIMIT 1";
+  connection.query(sqlsss, async function (err, appData) {
+    if (err) {
+      console.log('err: ', err);
+    } else {
+      let orderFound = ordersData.data.find(order => order.orderId === appData[0].order_id);
+      if(orderFound != undefined){
+        if(orderFound.orderStatus == 'Triggered'){
+          await takeProfitOrder(appData[0]);
+        }
+      }
+    }
+  })
+}
 };
 
 const onError = async (err) => {
@@ -201,26 +201,12 @@ async function takeProfitOrder(data) {
 
     console.log('openOrderGet: ', openOrderGet);
 
-    // if (Number(openOrderGet.info.size) > Number(data?.quantity)) {
-    //   let params;
-    //   if (data?.trigger_price && (Number(data?.trigger_price) != 0)) {
-    //     let sltriggerPriceData = data?.transaction_type == 'sell' ? calculateBuyTPSL(data?.price, data?.sl_price) : calculateSellTPSL(data?.price, data?.sl_price);
-    //     params = {
-    //       'stopLoss': {
-    //         'type': 'limit', // or 'market', this field is not necessary if limit price is specified
-    //         'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
-    //       },
-    //       marginMode: 'isolated'
-    //     };
-    //   } else {
-    //     params = {
-    //       marginMode: 'isolated',
-    //       tpslMode: 'partial'
-    //     };
-    //   }
-    //   let order2 = data?.accountType === 'spot' ? await bybitClient.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params) : await bybitClient1.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params);
-    //   console.log('order2: ', order2);
-    // }
+    if (Number(openOrderGet.info.size) > Number(data?.quantity)) {
+      let qtyDiffrence = Number(openOrderGet.info.size) - Number(data?.quantity);
+      let positionDirection1 = openOrderGet.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
+      let order2 = data?.accountType === 'spot' ? await bybitClient.createOrder(data?.instrument_token, 'market', positionDirection1, qtyDiffrence, 0) : await bybitClient1.createOrder(data?.instrument_token, 'market', positionDirection1, qtyDiffrence, 0) ;
+      console.log('order2: ', order2);
+    }
 
     const entryPrice = Number(openOrderGet.entryPrice);
     const array1 = data?.tp_price.split(',');
@@ -463,6 +449,16 @@ router.get('/buySellApi2', async function (req, res) {
         })
       );
     }
+    let openOrdersData0 = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
+    if(openOrdersData0.info.side != '' && openOrdersData0.info.side.toLowerCase() != req.query?.transaction_type){
+      let getValue = (((openOrdersData0.unrealizedPnl/openOrdersData0.contracts)*100)/openOrdersData0.entryPrice).toFixed(6);
+      console.log('getValue: ', getValue);
+      if(Number(getValue)< 0.1 ){
+        let positionDirection1 = openOrdersData0.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
+        let openOrdersData02 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0) : await bybitClient1.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0);
+        console.log('openOrdersData02: ', openOrdersData02);
+      }
+    }
     if(req.query?.leverage && Number(req.query?.leverage) != 0){
       await bybitClient1.setLeverage(Number(req.query?.leverage),req.query?.instrument_token,{"marginMode": req.query?.margin_mode})
     }
@@ -472,14 +468,6 @@ router.get('/buySellApi2', async function (req, res) {
     // let openOrderQty;
     let openOrdersData = req.query?.accountType === 'spot' ?  await bybitClient.fetchPosition(req.query?.instrument_token) : await bybitClient1.fetchPosition(req.query?.instrument_token);
     let positionDirection = openOrdersData.info.side;
-    if(openOrdersData.info.side != '' ){
-      let getValue = (((openOrdersData.unrealizedPnl/openOrdersData.contracts)*100)/openOrdersData.entryPrice).toFixed(6);
-      if(Number(getValue)< 0.4 ){
-        let positionDirection1 = openOrdersData.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
-        let openOrdersData2 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData.info.size, 0) : await bybitClient1.createOrder(openOrdersData.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData.info.size, 0);
-        console.log('openOrdersData2: ', openOrdersData2);
-      }
-    }
     // if(req.query?.position_size && (Number(req.query?.position_size) != 0)){
     //   openOrderQty = Number(req.query?.position_size) + Number(openOrdersData.contracts);
     // }else{

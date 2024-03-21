@@ -201,26 +201,26 @@ async function takeProfitOrder(data) {
 
     console.log('openOrderGet: ', openOrderGet);
 
-    if (Number(openOrderGet.info.size) > Number(data?.quantity)) {
-      let params;
-      if (data?.trigger_price && (Number(data?.trigger_price) != 0)) {
-        let sltriggerPriceData = data?.transaction_type == 'sell' ? calculateBuyTPSL(data?.price, data?.sl_price) : calculateSellTPSL(data?.price, data?.sl_price);
-        params = {
-          'stopLoss': {
-            'type': 'limit', // or 'market', this field is not necessary if limit price is specified
-            'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
-          },
-          marginMode: 'isolated'
-        };
-      } else {
-        params = {
-          marginMode: 'isolated',
-          tpslMode: 'partial'
-        };
-      }
-      let order2 = data?.accountType === 'spot' ? await bybitClient.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params) : await bybitClient1.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params);
-      console.log('order2: ', order2);
-    }
+    // if (Number(openOrderGet.info.size) > Number(data?.quantity)) {
+    //   let params;
+    //   if (data?.trigger_price && (Number(data?.trigger_price) != 0)) {
+    //     let sltriggerPriceData = data?.transaction_type == 'sell' ? calculateBuyTPSL(data?.price, data?.sl_price) : calculateSellTPSL(data?.price, data?.sl_price);
+    //     params = {
+    //       'stopLoss': {
+    //         'type': 'limit', // or 'market', this field is not necessary if limit price is specified
+    //         'triggerPrice': Number(sltriggerPriceData.toFixed(6)),
+    //       },
+    //       marginMode: 'isolated'
+    //     };
+    //   } else {
+    //     params = {
+    //       marginMode: 'isolated',
+    //       tpslMode: 'partial'
+    //     };
+    //   }
+    //   let order2 = data?.accountType === 'spot' ? await bybitClient.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params) : await bybitClient1.editOrder(data.order_id, data?.instrument_token, data?.order_type, data?.transaction_type, 30, data?.price, params);
+    //   console.log('order2: ', order2);
+    // }
 
     const entryPrice = Number(openOrderGet.entryPrice);
     const array1 = data?.tp_price.split(',');

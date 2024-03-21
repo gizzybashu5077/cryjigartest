@@ -453,7 +453,7 @@ router.get('/buySellApi2', async function (req, res) {
     if(openOrdersData0.info.side != '' && openOrdersData0.info.side.toLowerCase() != req.query?.transaction_type){
       let getValue = (((openOrdersData0.unrealizedPnl/openOrdersData0.contracts)*100)/openOrdersData0.entryPrice).toFixed(6);
       console.log('getValue: ', getValue);
-      if(Number(getValue)< 0.1 ){
+      if(Number(getValue)< 0.4 ){
         let positionDirection1 = openOrdersData0.info.side.toLowerCase() == 'sell' ? 'buy' : 'sell';
         let openOrdersData02 =  req.query?.accountType === 'spot' ? await bybitClient.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0) : await bybitClient1.createOrder(openOrdersData0.info.symbol.replace("USDT", '/USDT:USDT'), 'market', positionDirection1, openOrdersData0.info.size, 0);
         console.log('openOrdersData02: ', openOrdersData02);

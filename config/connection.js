@@ -1,7 +1,7 @@
 var mysql  = require('mysql');
 
 var db_config = {
-  connectionLimit : 2,
+  connectionLimit : 3,
   host     : 'bnbrn611jhld2mgh4f9w-mysql.services.clever-cloud.com',
   user     : 'uy70tyqzlbm9mtw0',
   password : 'uuvWv8lmpkqoNiLfOHne',
